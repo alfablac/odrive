@@ -1,7 +1,9 @@
 ## odrive folder/file download
 
 This is a downloader for sharepoint folder and files. Works on Windows/Linux.
-Since authorization is giving through the share URL, links must follow the format:
+
+Since authorization is given through the share URL, links must follow the format:
+
 ```https://<dominio>:f:/g/personal/<caminho>/<id>?e=<id>```
 
 ## Requirements
