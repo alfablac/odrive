@@ -15,6 +15,7 @@ python3 odrive.py -u <URL>
 ## To-do
 
 - [x] extract bit.ly
+- [x] auto cookies export
 - [ ] recursive folder download
 
 
