@@ -16,6 +16,7 @@ python3 odrive.py -u <URL>
 
 - [x] extract bit.ly
 - [x] auto cookies export
-- [ ] recursive folder download
+- [x] recursive folder download (kinda. it works for one level of depth)
+- [ ] dont add file to download list if it's already in the folder
 
 
