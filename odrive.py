@@ -5,6 +5,13 @@ import json
 import subprocess
 import argparse
 
+def get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1):
+    API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1, ROOT_FOLDER)
+    print("Primeiro POST para pegar inicio da lista")
+    page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+    page_request_json = json.loads(page_request.text)
+    return page_request_json
+
 COOKIE_BASE = "DOMAIN	FALSE	/	TRUE	0	FedAuth	AUTH    \n     DOMAIN	FALSE	/	FALSE	0	FeatureOverrides_enableFeatures	 \n   DOMAIN	FALSE	/	FALSE	0	FeatureOverrides_disableFeatures"
 parser = argparse.ArgumentParser(
     description='odrive sharepoint file/folder downloader'
@@ -56,14 +63,18 @@ if len(page_data_json['ListData']['Row']) > 0:
 else:
     ROOT_FOLDER = re.search('^(.+)\/([^/]+)$', page_data_json['rootFolder'], re.IGNORECASE).group(1)
 ARROBA_1 = page_data_json['ListUrl']
-API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1, ROOT_FOLDER)
+
+
+page_request_json = get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1)
 API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&TryNewExperienceSingle=TRUE'.format(ARROBA_1)
-print("Primeiro POST para pegar inicio da lista")
-page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
-page_request_json = json.loads(page_request.text)
 
 for data in page_request_json['ListData']['Row']:
-    uniqueid_list.append(data)
+    if data['FSObjType'] == '1':
+        page_request_json = get_folder_list(HTTP_ROOT, data['FileRef'], ARROBA_1)
+        for inside_data in page_request_json['ListData']['Row']:
+            uniqueid_list.append(inside_data)
+    else:
+        uniqueid_list.append(data)
 
 next_href = True
 while next_href == True:
