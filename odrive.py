@@ -4,9 +4,12 @@ import re
 import json
 import subprocess
 import argparse
+from urllib.parse import quote
+
 
 def get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1):
-    API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1, ROOT_FOLDER)
+    API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=' + '%27{}%27&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1.replace('/','%2F').replace('_','%5F'), quote(ROOT_FOLDER).replace('/','%2F').replace('_','%5F').replace('-','%2D'))
+    # todo: better handling of unicode chars
     print("Primeiro POST para pegar inicio da lista")
     page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
     page_request_json = json.loads(page_request.text)
