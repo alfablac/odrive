@@ -13,7 +13,14 @@ Since authorization is given through the share URL, links must follow the format
 
 ## Usage
 ```bash
-python3 odrive.py -u <URL>
+usage: python3 odrive.py [-h] -u URL [-i]
+odrive sharepoint file/folder downloader
+
+required arguments:
+  -u URL, --url URL  download url
+optional arguments:
+  -h, --help         show this help message and exit
+  -i, --interactive  interactive mode (select which items to download)
 ```
 
 ## To-do
