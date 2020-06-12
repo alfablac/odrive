@@ -6,22 +6,30 @@ import subprocess
 import argparse
 from urllib.parse import quote
 
-
 def get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1):
     API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=' + '%27{}%27&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1.replace('/','%2F').replace('_','%5F'), quote(ROOT_FOLDER).replace('/','%2F').replace('_','%5F').replace('-','%2D'))
     # todo: better handling of unicode chars
-    print("Primeiro POST para pegar inicio da lista")
     page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
     page_request_json = json.loads(page_request.text)
     return page_request_json
+
+class download_item:
+    def __init__(self, id, name, url):
+        self.id = id
+        self.name = name
+        self.url = url
+
 
 COOKIE_BASE = "DOMAIN	FALSE	/	TRUE	0	FedAuth	AUTH    \n     DOMAIN	FALSE	/	FALSE	0	FeatureOverrides_enableFeatures	 \n   DOMAIN	FALSE	/	FALSE	0	FeatureOverrides_disableFeatures"
 parser = argparse.ArgumentParser(
     description='odrive sharepoint file/folder downloader'
 )
 parser.add_argument('-u', '--url', help='url para download', required=True)
+
+parser.add_argument('-i', '--interactive', action='store_true', help='modo de seleção interativo', required=False)
 args = parser.parse_args()
 BAIXAR = args.url
+INTERACTIVE = args.interactive
 
 if 'bit.ly' in BAIXAR:
     extract_url = requests.get(url=BAIXAR)
@@ -44,8 +52,6 @@ with open('cookies.txt', 'w') as f:
 
 HEADERS_JSON = {
     'Accept': 'application/json;odata=verbose',
-    'Accept-Language': 'en-US',
-    'Accept-Encoding': 'gzip, deflate, br',
     'Content-Type': 'application/json;odata=verbose',
     'Accept-Encoding': 'gzip, deflate, br',
     'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -67,7 +73,7 @@ else:
     ROOT_FOLDER = re.search('^(.+)\/([^/]+)$', page_data_json['rootFolder'], re.IGNORECASE).group(1)
 ARROBA_1 = page_data_json['ListUrl']
 
-
+print("Primeiro POST para pegar inicio da lista")
 page_request_json = get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1)
 API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&TryNewExperienceSingle=TRUE'.format(ARROBA_1)
 
@@ -92,12 +98,32 @@ while next_href == True:
 
 print("Gerando lista de itens")
 download_list = []
-for data in uniqueid_list:
-    download_list.append(HTTP_ROOT + '/_layouts/15/download.aspx?UniqueId=' + data['UniqueId'].replace('{','').replace('}',''))
+for i, data in enumerate(uniqueid_list):
+    down = download_item(i+1, data['FileRef'].replace(ARROBA_1,''), HTTP_ROOT + '/_layouts/15/download.aspx?UniqueId=' + data['UniqueId'].replace('{','').replace('}',''))
+    download_list.append(down)
+
+if INTERACTIVE:
+    for item in download_list:
+        print(str(item.id) + ' - ' + item.name[1:])
+    filter = input("Selecione os items para baixar, ex: 1,3,5 ou 1,2,3-5 ou 5-10:  ")
+    filter = filter.split(',')
+    baixar = []
+    for down in filter:
+        if '-' in down:
+            baixar.extend(list(range(int(down.split('-')[0]), int(down.split('-')[1]) + 1)))
+        else:
+            baixar.append(int(down))
+    filtered = [x for x in download_list if x.id in baixar]
+    print('\n' + "Lista Fitrada: \n")
+    for item in filtered:
+        print(str(item.id) + ' - ' + item.name[1:])
+    download_list = filtered
+
+
 
 with open('download_list.txt', 'w') as f:
     for data in download_list:
-        f.write(data + '\n')
+        f.write(data.url + '\n')
 
 print("Chamando aria2c")
 subprocess.call(["aria2c", "--dir=./", "--input-file=download_list.txt",
