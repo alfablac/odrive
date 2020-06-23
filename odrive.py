@@ -1,9 +1,11 @@
-import requests
-import re
-import json
-import subprocess
 import argparse
+import json
+import os
+import re
+import subprocess
 from urllib.parse import quote
+
+import requests
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
@@ -36,14 +38,18 @@ parser.add_argument('-i', '--interactive', action='store_true', help='modo de se
 parser.add_argument('-p', '--password', help='passando senha se preciso', required=False)
 args = parser.parse_args()
 
-
 BAIXAR = args.url
 INTERACTIVE = args.interactive
 PASSWORD = args.password
 PCBROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
 HEADERS_COOKIES = ''
-CHROMEDRIVER_PATH = 'chromedriver'
 
+if os.name == 'nt':
+    CHROMEDRIVER_PATH = './chromedriver.exe'
+    ARIA2C_PATH = './aria2c.exe'
+else:
+    CHROMEDRIVER_PATH = './chromedriver'
+    ARIA2C_PATH = './aria2c'
 
 if 'bit.ly' in BAIXAR:
     extract_url = requests.get(url=BAIXAR)
@@ -164,8 +170,7 @@ with open('download_list.txt', 'w') as f:
         f.write(data.url + '\n')
 
 print("Chamando aria2c")
-subprocess.call(["aria2c", "--dir=./", "--input-file=download_list.txt",
+subprocess.call([ARIA2C_PATH, "--dir=./", "--input-file=download_list.txt",
                  "--load-cookies=cookies.txt", "--max-concurrent-downloads=1", "--connect-timeout=60",
                  "--max-connection-per-server=16", "--continue=true", "--split=16", "--min-split-size=1M",
                  "--human-readable=true", "--download-result=full", "--file-allocation=none"])
-
