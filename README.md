@@ -8,9 +8,11 @@ Since authorization is given through the share URL, links must follow the format
 
 ## Requirements
 
-- python3 + requests module + selenium module
-- [aria2c](https://github.com/aria2/aria2/releases/tag/release-1.35.0) on PATH
-- [chromedriver](https://chromedriver.storage.googleapis.com/index.html?path=83.0.4103.39/) on PATH
+[python3](https://www.python.org/downloads/) + requests module + selenium module
+
+``` pip install -r requirements.txt ``` 
+
+should be enough to run this. aria2c and chromedriver binaries are included in the root path.
 
 ## Usage
 ```bash
@@ -25,7 +27,7 @@ optional arguments:
   -i, --interactive  
                         interactive mode (select which items to download)
   -p PASSWORD, --password PASSWORD
-                        passando senha se preciso
+                        given folder password if it's needed
 ```
 
 ## To-do
