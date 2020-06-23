@@ -4,13 +4,21 @@ import json
 import subprocess
 import argparse
 from urllib.parse import quote
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.keys import Keys
+
 
 def get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1):
-    API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=' + '%27{}%27&RootFolder={}&TryNewExperienceSingle=TRUE'.format(ARROBA_1.replace('/','%2F').replace('_','%5F'), quote(ROOT_FOLDER).replace('/','%2F').replace('_','%5F').replace('-','%2D'))
+    API_URL = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=' + '%27{}%27&RootFolder={}&TryNewExperienceSingle=TRUE'.format(
+        ARROBA_1.replace('/', '%2F').replace('_', '%5F'),
+        quote(ROOT_FOLDER).replace('/', '%2F').replace('_', '%5F').replace('-', '%2D'))
     # todo: better handling of unicode chars
-    page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+    page_request = requests.post(url=API_URL, headers=HEADERS_JSON, cookies=auth_url.cookies,
+                                 data=json.dumps(page_payload_json))
     page_request_json = json.loads(page_request.text)
     return page_request_json
+
 
 class download_item:
     def __init__(self, id, name, url):
@@ -24,11 +32,18 @@ parser = argparse.ArgumentParser(
     description='odrive sharepoint file/folder downloader'
 )
 parser.add_argument('-u', '--url', help='url para download', required=True)
-
 parser.add_argument('-i', '--interactive', action='store_true', help='modo de seleção interativo', required=False)
+parser.add_argument('-p', '--password', help='passando senha se preciso', required=False)
 args = parser.parse_args()
+
+
 BAIXAR = args.url
 INTERACTIVE = args.interactive
+PASSWORD = args.password
+PCBROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
+HEADERS_COOKIES = ''
+CHROMEDRIVER_PATH = 'chromedriver'
+
 
 if 'bit.ly' in BAIXAR:
     extract_url = requests.get(url=BAIXAR)
@@ -36,12 +51,34 @@ if 'bit.ly' in BAIXAR:
 
 print("Baixando URL:")
 print(BAIXAR)
+requests = requests.Session()
 auth_url = requests.get(url=BAIXAR)
 
-HEADERS_COOKIES = auth_url.headers['Set-Cookie']
-PCBROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
-AUTH = re.search('(FedAuth=)(.+?)(\;)', HEADERS_COOKIES, re.IGNORECASE).group(2)
-DOMAIN = re.search('(http(s?):\/\/)(.+?)(\/)', BAIXAR, re.IGNORECASE).group(3)
+if auth_url.text.find("requires a password") != -1:
+    print("Conteudo protegido por senha, carregando chromedriver")
+    options = Options()
+    options.headless = True
+    driver = webdriver.Chrome(CHROMEDRIVER_PATH, options=options)
+    driver.get(BAIXAR)
+    pass_id = driver.find_element_by_id('txtPassword')
+    pass_id.clear()
+    if not PASSWORD:
+        senha = input("Digite a senha: ")
+        PASSWORD = senha
+    print("Usando senha: " + PASSWORD)
+    pass_id.send_keys(PASSWORD)
+    pass_id.send_keys(Keys.RETURN)
+    request_cookies_browser = driver.get_cookies()
+    DOMAIN = request_cookies_browser[0]['domain']
+    AUTH = request_cookies_browser[0]['value']
+    auth_url.url = driver.current_url
+    selenium_cookies = driver.get_cookies()
+    for cookie in selenium_cookies:
+        requests.cookies.set(cookie['name'], cookie['value'])
+else:
+    HEADERS_COOKIES = auth_url.headers['Set-Cookie']
+    AUTH = re.search('(FedAuth=)(.+?)(\;)', HEADERS_COOKIES, re.IGNORECASE).group(2)
+    DOMAIN = re.search('(http(s?):\/\/)(.+?)(\/)', BAIXAR, re.IGNORECASE).group(3)
 
 COOKIE_BASE = re.sub(r"DOMAIN", DOMAIN, COOKIE_BASE)
 COOKIE_BASE = re.sub(r"AUTH", AUTH, COOKIE_BASE)
@@ -74,7 +111,8 @@ ARROBA_1 = page_data_json['ListUrl']
 
 print("Primeiro POST para pegar inicio da lista")
 page_request_json = get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1)
-API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&TryNewExperienceSingle=TRUE'.format(ARROBA_1)
+API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&TryNewExperienceSingle=TRUE'.format(
+    ARROBA_1)
 
 for data in page_request_json['ListData']['Row']:
     if data['FSObjType'] == '1':
@@ -88,7 +126,8 @@ next_href = True
 while next_href == True:
     if 'NextHref' in page_data_json['ListData']:
         print("Pegando próxima página de itens")
-        page_iq = requests.post(url=API_URL_REP+page_data_json['ListData']['NextHref'].replace('?Paged','&Paged'), headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+        page_iq = requests.post(url=API_URL_REP + page_data_json['ListData']['NextHref'].replace('?Paged', '&Paged'),
+                                headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
         page_data_json = json.loads(page_iq.text)
         for data in page_data_json['ListData']['Row']:
             uniqueid_list.append(data)
@@ -98,7 +137,9 @@ while next_href == True:
 print("Gerando lista de itens")
 download_list = []
 for i, data in enumerate(uniqueid_list):
-    down = download_item(i+1, data['FileRef'].replace(ARROBA_1,''), HTTP_ROOT + '/_layouts/15/download.aspx?UniqueId=' + data['UniqueId'].replace('{','').replace('}',''))
+    down = download_item(i + 1, data['FileRef'].replace(ARROBA_1, ''),
+                         HTTP_ROOT + '/_layouts/15/download.aspx?UniqueId=' + data['UniqueId'].replace('{', '').replace(
+                             '}', ''))
     download_list.append(down)
 
 if INTERACTIVE:
@@ -118,16 +159,13 @@ if INTERACTIVE:
         print(str(item.id) + ' - ' + item.name[1:])
     download_list = filtered
 
-
-
 with open('download_list.txt', 'w') as f:
     for data in download_list:
         f.write(data.url + '\n')
 
 print("Chamando aria2c")
 subprocess.call(["aria2c", "--dir=./", "--input-file=download_list.txt",
-                 "--load-cookies=cookies.txt","--max-concurrent-downloads=1", "--connect-timeout=60",
+                 "--load-cookies=cookies.txt", "--max-concurrent-downloads=1", "--connect-timeout=60",
                  "--max-connection-per-server=16", "--continue=true", "--split=16", "--min-split-size=1M",
                  "--human-readable=true", "--download-result=full", "--file-allocation=none"])
 
-print(download_list)
