@@ -8,10 +8,11 @@ Since authorization is given through the share URL, links must follow the format
 
 ## Requirements
 
-- python3 + requests module + selenium module
+[python3](https://www.python.org/downloads/) + requests module + selenium module
 
-Use ```
-  pip install -r requirements.txt```
+``` pip install -r requirements.txt ``` 
+
+should be enough to run this. aria2c and chromedriver binaries are included in the root path.
 
 ## Usage
 ```bash
@@ -26,7 +27,7 @@ optional arguments:
   -i, --interactive  
                         interactive mode (select which items to download)
   -p PASSWORD, --password PASSWORD
-                        passando senha se preciso
+                        given folder password if it's needed
 ```
 
 ## To-do
