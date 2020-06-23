@@ -64,6 +64,7 @@ if auth_url.text.find("requires a password") != -1:
     print("Conteudo protegido por senha, carregando chromedriver")
     options = Options()
     options.headless = True
+    options.add_argument("--log-level=3")
     driver = webdriver.Chrome(CHROMEDRIVER_PATH, options=options)
     driver.get(BAIXAR)
     pass_id = driver.find_element_by_id('txtPassword')
