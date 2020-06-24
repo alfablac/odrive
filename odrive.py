@@ -36,11 +36,13 @@ parser = argparse.ArgumentParser(
 parser.add_argument('-u', '--url', help='url para download', required=True)
 parser.add_argument('-i', '--interactive', action='store_true', help='modo de seleção interativo', required=False)
 parser.add_argument('-p', '--password', help='passando senha se preciso', required=False)
+parser.add_argument('-o', '--output', help='pasta de saida', required=False)
 args = parser.parse_args()
 
 BAIXAR = args.url
 INTERACTIVE = args.interactive
 PASSWORD = args.password
+OUTPUT_DIR = args.output if args.output else ""
 PCBROWSER_UA = 'Mozilla/5.0 (Windows NT 10.0; WOW64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/80.0.3987.132 Safari/537.36'
 HEADERS_COOKIES = ''
 
@@ -171,7 +173,7 @@ with open('download_list.txt', 'w') as f:
         f.write(data.url + '\n')
 
 print("Chamando aria2c")
-subprocess.call([ARIA2C_PATH, "--dir=./", "--input-file=download_list.txt",
+subprocess.call([ARIA2C_PATH, "--dir=./" + OUTPUT_DIR, "--input-file=download_list.txt",
                  "--load-cookies=cookies.txt", "--max-concurrent-downloads=1", "--connect-timeout=60",
                  "--max-connection-per-server=16", "--continue=true", "--split=16", "--min-split-size=1M",
                  "--human-readable=true", "--download-result=full", "--file-allocation=none"])

@@ -16,7 +16,7 @@ should be enough to run this. aria2c and chromedriver binaries are included in t
 
 ## Usage
 ```bash
-usage: python3 odrive.py [-h] -u URL [-i] [-p PASSWORD]
+usage: python3 odrive.py [-h] -u URL [-i] [-p PASSWORD] [-o OUTPUT]
 odrive sharepoint file/folder downloader
 
 required arguments:
@@ -28,6 +28,8 @@ optional arguments:
                         interactive mode (select which items to download)
   -p PASSWORD, --password PASSWORD
                         given folder password if it's needed
+  -o OUTPUT, --output OUTPUT
+                        pasta de saida
 ```
 
 ## To-do
