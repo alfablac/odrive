@@ -50,8 +50,8 @@ if os.name == 'nt':
     CHROMEDRIVER_PATH = './chromedriver.exe'
     ARIA2C_PATH = './aria2c.exe'
 else:
-    CHROMEDRIVER_PATH = './chromedriver'
-    ARIA2C_PATH = './aria2c'
+    CHROMEDRIVER_PATH = 'chromedriver'
+    ARIA2C_PATH = 'aria2c'
 
 if 'bit.ly' in BAIXAR:
     extract_url = requests.get(url=BAIXAR)
@@ -173,7 +173,7 @@ with open('download_list.txt', 'w') as f:
         f.write(data.url + '\n')
 
 print("Chamando aria2c")
-subprocess.call([ARIA2C_PATH, "--dir=./" + OUTPUT_DIR, "--input-file=download_list.txt",
+subprocess.call([ARIA2C_PATH, "--dir=" + OUTPUT_DIR, "--input-file=download_list.txt",
                  "--load-cookies=cookies.txt", "--max-concurrent-downloads=1", "--connect-timeout=60",
                  "--max-connection-per-server=16", "--continue=true", "--split=16", "--min-split-size=1M",
                  "--human-readable=true", "--download-result=full", "--file-allocation=none"])

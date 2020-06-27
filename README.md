@@ -15,7 +15,7 @@ Since authorization is given through the share URL, links must follow the format
 should be enough to run this. aria2c and chromedriver binaries are included in the root path.
 
 ## Usage
-```bash
+```
 usage: python3 odrive.py [-h] -u URL [-i] [-p PASSWORD] [-o OUTPUT]
 odrive sharepoint file/folder downloader
 
@@ -29,8 +29,10 @@ optional arguments:
   -p PASSWORD, --password PASSWORD
                         given folder password if it's needed
   -o OUTPUT, --output OUTPUT
-                        pasta de saida
+                        output folder. Should work for either relative or absolute paths (Win/*nix)
 ```
+
+
 
 ## To-do
 
@@ -38,6 +40,6 @@ optional arguments:
 - [x] auto cookies export
 - [x] recursive folder download (kinda. it works for one level of depth)
 - [x] add support for folder locked with password 
-- [ ] dont add file to download list if it's already in the folder
+- [x] dont add file to download list if it's already in the folder ("-i" option might covers that)
 
 
