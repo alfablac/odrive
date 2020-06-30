@@ -89,10 +89,11 @@ else:
     AUTH = re.search('(FedAuth=)(.+?)(\;)', HEADERS_COOKIES, re.IGNORECASE).group(2)
     DOMAIN = re.search('(http(s?):\/\/)(.+?)(\/)', BAIXAR, re.IGNORECASE).group(3)
 
+ID = BAIXAR.rsplit('/', 1)[-1][0:5]
 COOKIE_BASE = re.sub(r"DOMAIN", DOMAIN, COOKIE_BASE)
 COOKIE_BASE = re.sub(r"AUTH", AUTH, COOKIE_BASE)
 
-with open('cookies.txt', 'w') as f:
+with open('cookies_' + ID + '.txt', 'w') as f:
     f.write(COOKIE_BASE)
 
 HEADERS_JSON = {
@@ -189,12 +190,12 @@ if INTERACTIVE:
         print(str(item.id) + ' - ' + item.name[1:])
     download_list = filtered
 
-with open('download_list.txt', 'w') as f:
+with open('download_list_' + ID + '.txt', 'w') as f:
     for data in download_list:
         f.write(data.url + '\n')
 
 print("Chamando aria2c")
-subprocess.call([ARIA2C_PATH, "--dir=" + OUTPUT_DIR, "--input-file=download_list.txt",
-                 "--load-cookies=cookies.txt", "--max-concurrent-downloads=1", "--connect-timeout=60",
+subprocess.call([ARIA2C_PATH, "--dir=" + OUTPUT_DIR, "--input-file=" + 'download_list_' + ID + '.txt',
+                 "--load-cookies=" + 'cookies_' + ID + '.txt', "--max-concurrent-downloads=1", "--connect-timeout=60",
                  "--max-connection-per-server=16", "--continue=true", "--split=16", "--min-split-size=1M",
                  "--human-readable=true", "--download-result=full", "--file-allocation=none"])
