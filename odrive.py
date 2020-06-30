@@ -123,21 +123,29 @@ page_request_json = get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1)
 API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderListDataAsStream?@a1=\'{}\'&TryNewExperienceSingle=TRUE'.format(
     ARROBA_1)
 
-for data in page_request_json['ListData']['Row']:
+inside_folders_ids = []
+inside_folders = []
+rows = page_request_json['ListData']['Row']
+for data in rows:
     if data['FSObjType'] == '1':
         print("Entrando na pasta " + data["FileLeafRef"])
-        page_request_json = get_folder_list(HTTP_ROOT, data['FileRef'], ARROBA_1)
-        for inside_data in page_request_json['ListData']['Row']:
-            uniqueid_list.append(inside_data)
+        page_request_json_folder = get_folder_list(HTTP_ROOT, data['FileRef'], ARROBA_1)
+        for inside_data in page_request_json_folder['ListData']['Row']:
+            if inside_data['FSObjType'] == '1' and inside_data['ID'] not in inside_folders_ids:
+                inside_folders_ids.append(inside_data['ID'])
+                inside_folders.append(inside_data)
+                rows.extend(inside_folders)
+            else:
+                uniqueid_list.append(inside_data)
         next_href = True
         while next_href == True:
-            if 'NextHref' in page_request_json['ListData']:
+            if 'NextHref' in page_request_json_folder['ListData']:
                 print("Pegando próxima página de itens")
                 page_iq = requests.post(
-                    url=API_URL_REP + page_request_json['ListData']['NextHref'].replace('?Paged', '&Paged'),
+                    url=API_URL_REP + page_request_json_folder['ListData']['NextHref'].replace('?Paged', '&Paged'),
                     headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
-                page_request_json = json.loads(page_iq.text)
-                for data in page_request_json['ListData']['Row']:
+                page_request_json_folder = json.loads(page_iq.text)
+                for data in page_request_json_folder['ListData']['Row']:
                     uniqueid_list.append(data)
             else:
                 next_href = False
