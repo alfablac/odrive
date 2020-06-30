@@ -125,9 +125,22 @@ API_URL_REP = HTTP_ROOT + '/_api/web/GetListUsingPath(DecodedUrl=@a1)/RenderList
 
 for data in page_request_json['ListData']['Row']:
     if data['FSObjType'] == '1':
+        print("Entrando na pasta " + data["FileLeafRef"])
         page_request_json = get_folder_list(HTTP_ROOT, data['FileRef'], ARROBA_1)
         for inside_data in page_request_json['ListData']['Row']:
             uniqueid_list.append(inside_data)
+        next_href = True
+        while next_href == True:
+            if 'NextHref' in page_request_json['ListData']:
+                print("Pegando próxima página de itens")
+                page_iq = requests.post(
+                    url=API_URL_REP + page_request_json['ListData']['NextHref'].replace('?Paged', '&Paged'),
+                    headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+                page_request_json = json.loads(page_iq.text)
+                for data in page_request_json['ListData']['Row']:
+                    uniqueid_list.append(data)
+            else:
+                next_href = False
     else:
         uniqueid_list.append(data)
 
