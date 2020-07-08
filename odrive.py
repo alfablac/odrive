@@ -110,7 +110,11 @@ page_iq = requests.get(url=auth_url.url, headers=HEADERS_JSON, cookies=auth_url.
 page_data = re.search('(var g_listData = )({.*})(\;)', page_iq.text, re.IGNORECASE | re.DOTALL).group(2)
 page_payload = re.search('(var g_payload = )({.*})(\;)', page_iq.text, re.IGNORECASE).group(2)
 page_payload_json = json.loads(page_payload)
-page_data_json = json.loads(page_data)
+try:
+    page_data_json = json.loads(page_data)
+except:
+    page_data = re.search('(var g_listData = )({.*})(\;if)', page_iq.text, re.IGNORECASE | re.DOTALL).group(2)
+    page_data_json = json.loads(page_data)
 uniqueid_list = []
 HTTP_ROOT = page_data_json['HttpRoot']
 if len(page_data_json['ListData']['Row']) > 0:
