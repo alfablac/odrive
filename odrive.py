@@ -3,6 +3,7 @@ import json
 import os
 import re
 import subprocess
+import time
 from urllib.parse import quote
 
 import requests
@@ -61,8 +62,11 @@ print("Baixando URL:")
 print(BAIXAR)
 requests = requests.Session()
 auth_url = requests.get(url=BAIXAR)
+if auth_url.status_code == 429:
+    print("Erro de Too Many Requests. Ou o endereço foi abusado ou a conta foi derrubada/está com problemas")
+    exit(-1)
 
-if auth_url.text.find("requires a password") != -1:
+if auth_url.text.find("Inserir senha") != -1:
     print("Conteudo protegido por senha, carregando chromedriver")
     options = Options()
     options.headless = True
@@ -80,6 +84,8 @@ if auth_url.text.find("requires a password") != -1:
     request_cookies_browser = driver.get_cookies()
     DOMAIN = request_cookies_browser[0]['domain']
     AUTH = request_cookies_browser[0]['value']
+    if '77u' not in AUTH:
+        AUTH = request_cookies_browser[1]['value']
     auth_url.url = driver.current_url
     selenium_cookies = driver.get_cookies()
     for cookie in selenium_cookies:
@@ -163,6 +169,15 @@ while next_href == True:
         print("Pegando próxima página de itens")
         page_iq = requests.post(url=API_URL_REP + page_data_json['ListData']['NextHref'].replace('?Paged', '&Paged'),
                                 headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+        tries = 0
+        if page_iq.status_code == 429:
+            while tries < 3 and page_iq.status_code == 429:
+                print('Erro 429 - Too Many Requests - Tentando novamente')
+                time.sleep(5)
+                page_iq = requests.post(
+                    url=API_URL_REP + page_data_json['ListData']['NextHref'].replace('?Paged', '&Paged'),
+                    headers=HEADERS_JSON, cookies=auth_url.cookies, data=json.dumps(page_payload_json))
+                tries = tries + 1
         page_data_json = json.loads(page_iq.text)
         for data in page_data_json['ListData']['Row']:
             uniqueid_list.append(data)
