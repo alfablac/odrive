@@ -1,15 +1,20 @@
 import argparse
 import json
-import os
+import os, sys
 import re
 import subprocess
 import time
 from urllib.parse import quote
 
+from selenium.webdriver.common.by import By
+from webdriver_manager.chrome import ChromeDriverManager
 import requests
+
 from selenium import webdriver
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.keys import Keys
+
 
 
 def get_folder_list(HTTP_ROOT, ROOT_FOLDER, ARROBA_1):
@@ -71,9 +76,12 @@ if auth_url.text.find("Inserir senha") != -1:
     options = Options()
     options.headless = True
     options.add_argument("--log-level=3")
-    driver = webdriver.Chrome(CHROMEDRIVER_PATH, options=options)
+    path = os.path.dirname(os.path.abspath(sys.argv[0]))
+    chrome_service = Service(ChromeDriverManager(path=path).install())
+    driver = webdriver.Chrome(service=chrome_service, options=options)
+    driver.maximize_window()
     driver.get(BAIXAR)
-    pass_id = driver.find_element_by_id('txtPassword')
+    pass_id = driver.find_element(By.ID,'txtPassword')
     pass_id.clear()
     if not PASSWORD:
         senha = input("Digite a senha: ")
