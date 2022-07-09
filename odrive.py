@@ -71,7 +71,7 @@ if auth_url.status_code == 429:
     print("Erro de Too Many Requests. Ou o endereço foi abusado ou a conta foi derrubada/está com problemas")
     exit(-1)
 
-if auth_url.text.find("Inserir senha") != -1:
+if auth_url.text.find("Inserir senha") != -1 or auth_url.text.find('txtPassword') != -1:
     print("Conteudo protegido por senha, carregando chromedriver")
     options = Options()
     options.headless = True
